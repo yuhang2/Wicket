@@ -72,7 +72,6 @@ var app = (function () {
 			return objText.substring(0, 6).toLowerCase() == "circle"
 		},
 		loadCircle: function(objText) {
-			console.log("loadCircle", objText);
 			objText = objText.substring(6); // remove word circle
 			objText = objText.replace('(', '[').replace(')', ']');
 			// now objText should be a json array
@@ -81,13 +80,14 @@ var app = (function () {
 				center: {lat: arr[0], lng: arr[1]},
 				radius: arr[2],
 				strokeColor: '#FF0000',
-				strokeOpacity: 0.8,
+				strokeOpacity: 1.0,
 				strokeWeight: 2,
 				fillColor: '#FF0000',
-				fillOpacity: 0.35,
+				fillOpacity: 1.0,
 				map: this.gmap
 			});
 			obj.type = "circle"
+			console.log("loadCircle", objText, arr, obj);
 			return obj
 		},
 		loadObj: function(objText) {
