@@ -86,21 +86,11 @@ var app = (function () {
 			}
 
 			obj = wkt.toObject(this.gmap.defaults); // Make an object
+		
+			console.log("Loaded WKT object", wkt.type)
 
 			// Add listeners for overlay editing events
 			if (!Wkt.isArray(obj) && wkt.type !== 'point') {
-				// New vertex is inserted
-				google.maps.event.addListener(obj.getPath(), 'insert_at', function (n) {
-					app.updateText();
-				});
-				// Existing vertex is removed (insertion is undone)
-				google.maps.event.addListener(obj.getPath(), 'remove_at', function (n) {
-					app.updateText();
-				});
-				// Existing vertex is moved (set elsewhere)
-				google.maps.event.addListener(obj.getPath(), 'set_at', function (n) {
-					app.updateText();
-				});
 			} else {
 				if (obj.setEditable) {obj.setEditable(false);}
 			}
@@ -202,29 +192,6 @@ var app = (function () {
 
 				// Set the drawing mode to "pan" (the hand) so users can immediately edit
 				this.setDrawingMode(null);
-
-				// Polygon drawn
-				if (event.type === google.maps.drawing.OverlayType.POLYGON || event.type === google.maps.drawing.OverlayType.POLYLINE) {
-					// New vertex is inserted
-					google.maps.event.addListener(event.overlay.getPath(), 'insert_at', function (n) {
-						app.updateText();
-					});
-
-					// Existing vertex is removed (insertion is undone)
-					google.maps.event.addListener(event.overlay.getPath(), 'remove_at', function (n) {
-						app.updateText();
-					});
-
-					// Existing vertex is moved (set elsewhere)
-					google.maps.event.addListener(event.overlay.getPath(), 'set_at', function (n) {
-						app.updateText();
-					});
-				} else if (event.type === google.maps.drawing.OverlayType.RECTANGLE) { // Rectangle drawn
-					// Listen for the 'bounds_changed' event and update the geometry
-					google.maps.event.addListener(event.overlay, 'bounds_changed', function () {
-						app.updateText();
-					});
-				}
 
 				app.features.push(event.overlay);
 				wkt = new Wkt.Wkt();
