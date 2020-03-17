@@ -126,7 +126,13 @@ var app = (function () {
 
 			var bounds = new google.maps.LatLngBounds();
 
-			if (obj.type != "circle" && Wkt.isArray(obj)) { // Distinguish multigeometries (Arrays) from objects
+			if (obj.type == "circle") {
+				console.log("circle: obj.setMap")
+				obj.setMap(this.gmap); // Add it to the map
+				console.log("circle: this.features.push")
+				this.features.push(obj);
+				console.log("circle: this.features.push done")
+			} else if (Wkt.isArray(obj)) { // Distinguish multigeometries (Arrays) from objects
 				for (i in obj) {
 					if (obj.hasOwnProperty(i) && !Wkt.isArray(obj[i])) {
 						obj[i].setMap(this.gmap);
@@ -143,18 +149,19 @@ var app = (function () {
 			} else {
 				obj.setMap(this.gmap); // Add it to the map
 				this.features.push(obj);
-
 				if(obj.type === 'point' || obj.type === 'multipoint') {
 					bounds.extend(obj.getPosition());
-				} else if(obj.type === 'circle') {
 				} else {
 					obj.getPath().forEach(function(element,index){bounds.extend(element)});
 				}
 			}
 
-			// Pan the map to the feature
-			this.gmap.fitBounds(bounds);
+			if (obj.type != "circle") {
+				// Pan the map to the feature
+				this.gmap.fitBounds(bounds);
+			}
 
+			console.log("mapIt returning", obj.type);
 			return obj;
 		},
 		/**
