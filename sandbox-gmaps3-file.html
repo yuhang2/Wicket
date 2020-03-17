@@ -52,20 +52,46 @@ var app = (function () {
 				var wreader = new jsts.io.WKTReader()
 				var wwriter = new jsts.io.WKTWriter()
 				var union
-				for (var i = 0, text; text = textList[i]; i++) {
-					let s1 = wreader.read(text)
-					if (i == 0) {
+				for (var i = 0, objText ; objText = textList[i]; i++) {
+					if (app.isCircle(objText)) {
+						app.mapIt(app.loadCircle(objText));
+						continue
+					}
+					let s1 = wreader.read(objText)
+					if (union == null) {
 						union = s1
 						continue
 					}
 					union = s1.union(union)
 				}
-				var result = wwriter.write(union)
-				app.mapIt(result);
+				app.mapIt(app.loadObj(wwriter.write(union)));
 			});
 		},
 
+		isCircle: function(objText) {
+			return objText.substring(0, 6).toLowerCase() == "circle"
+		},
+		loadCircle: function(objText) {
+			console.log("loadCircle", objText);
+			objText = objText.substring(6); // remove word circle
+			objText = objText.replace('(', '[').replace(')', ']');
+			// now objText should be a json array
+			var arr = JSON.parse(objText);
+			var obj = new google.maps.Circle({
+				center: {lat: arr[0], lng: arr[1]},
+				radius: arr[2],
+				strokeColor: '#FF0000',
+				strokeOpacity: 0.8,
+				strokeWeight: 2,
+				fillColor: '#FF0000',
+				fillOpacity: 0.35,
+				map: this.gmap
+			});
+			obj.type = "circle"
+			return obj
+		},
 		loadObj: function(objText) {
+			console.log("loadObj");
 			var wkt = new Wkt.Wkt();
 			try { // Catch any malformed WKT strings
 				wkt.read(objText);
@@ -89,17 +115,18 @@ var app = (function () {
 		 * Maps the current contents of the textarea.
 		 * @return  {Object}    Some sort of geometry object
 		 */
-		mapIt: function (objText) {
-			var obj = app.loadObj(objText);
-			// Add listeners for overlay editing events
-			if (!Wkt.isArray(obj) && obj.type !== 'point') {
-			} else {
-				if (obj.setEditable) {obj.setEditable(false);}
+		mapIt: function (obj) {
+			if (obj.type != "circle") {
+				// Add listeners for overlay editing events
+				if (!Wkt.isArray(obj) && obj.type !== 'point') {
+				} else {
+					if (obj.setEditable) {obj.setEditable(false);}
+				}
 			}
 
 			var bounds = new google.maps.LatLngBounds();
 
-			if (Wkt.isArray(obj)) { // Distinguish multigeometries (Arrays) from objects
+			if (obj.type != "circle" && Wkt.isArray(obj)) { // Distinguish multigeometries (Arrays) from objects
 				for (i in obj) {
 					if (obj.hasOwnProperty(i) && !Wkt.isArray(obj[i])) {
 						obj[i].setMap(this.gmap);
@@ -117,10 +144,12 @@ var app = (function () {
 				obj.setMap(this.gmap); // Add it to the map
 				this.features.push(obj);
 
-				if(obj.type === 'point' || obj.type === 'multipoint')
+				if(obj.type === 'point' || obj.type === 'multipoint') {
 					bounds.extend(obj.getPosition());
-				else
+				} else if(obj.type === 'circle') {
+				} else {
 					obj.getPath().forEach(function(element,index){bounds.extend(element)});
+				}
 			}
 
 			// Pan the map to the feature
